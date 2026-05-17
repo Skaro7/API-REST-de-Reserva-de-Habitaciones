@@ -27,7 +27,7 @@ public class Room {
 
     @Column(nullable = false)
     @Positive
-    private BigDecimal price;
+    private BigDecimal pricePerNight;
 
 
 }
