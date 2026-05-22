@@ -1,7 +1,9 @@
 package com.reservadehabitaciones.hotel.controller;
 
 import com.reservadehabitaciones.hotel.dto.request.UserRequest;
+import com.reservadehabitaciones.hotel.dto.response.ReservationResponse;
 import com.reservadehabitaciones.hotel.dto.response.UserResponse;
+import com.reservadehabitaciones.hotel.service.ReservationService;
 import com.reservadehabitaciones.hotel.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final ReservationService reservationService;
 
     @PostMapping
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserRequest userRequest) {
@@ -33,6 +36,11 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserById(id));
+    }
+
+    @GetMapping("/{userId}/reservations")
+    public ResponseEntity<List<ReservationResponse>> getReservationsByUser(@PathVariable Long userId) {
+        return ResponseEntity.ok(reservationService.getReservationsByUser(userId));
     }
 }
 
