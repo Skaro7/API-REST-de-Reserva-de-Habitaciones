@@ -33,7 +33,7 @@ public class ReservationService {
         User user = userRepository.findById(reservationRequest.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
-        Room room = roomRepository.findById(Long.valueOf(reservationRequest.getRoomNumber()))
+        Room room = roomRepository.findByRoomNumber(reservationRequest.getRoomNumber())
                 .orElseThrow(() -> new ResourceNotFoundException("Habitación no encontrada"));
 
         LocalDate startDate = reservationRequest.getStartDate();
