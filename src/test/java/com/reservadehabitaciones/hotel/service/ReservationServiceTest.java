@@ -3,6 +3,7 @@ package com.reservadehabitaciones.hotel.service;
 import com.reservadehabitaciones.hotel.dto.request.ReservationRequest;
 import com.reservadehabitaciones.hotel.dto.response.ReservationResponse;
 import com.reservadehabitaciones.hotel.entity.Reservation;
+import com.reservadehabitaciones.hotel.entity.ReservationStatus;
 import com.reservadehabitaciones.hotel.entity.Room;
 import com.reservadehabitaciones.hotel.entity.User;
 import com.reservadehabitaciones.hotel.exception.ConflictException;
@@ -111,6 +112,67 @@ public class ReservationServiceTest {
 
         assertThrows(ConflictException.class, () ->
                 reservationService.createReservation(testReservation)
+        );
+
+        verify(reservationRepository, never()).save(any());
+    }
+
+    @Test
+    void createReservation_userAlreadyHasReservation() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(roomRepository.findByRoomNumber(101)).thenReturn(Optional.of(testRoom));
+
+        Reservation existingReservation = new Reservation();
+        existingReservation.setId(2L);
+        existingReservation.setUser(testUser);
+        existingReservation.setRoom(testRoom);
+        existingReservation.setStartDate(LocalDate.of(2026, 6, 5));
+        existingReservation.setEndDate(LocalDate.of(2026, 6, 20));
+
+        when(reservationRepository.findConflictingReservationsForUser(testUser, testReservation.getStartDate(), testReservation.getEndDate()))
+                .thenReturn(List.of(existingReservation));
+
+        assertThrows(ConflictException.class, () ->
+                reservationService.createReservation(testReservation)
+        );
+
+        verify(reservationRepository, never()).save(any());
+    }
+
+    @Test
+    void cancelReservation_success() {
+        Reservation reservation = new Reservation();
+        reservation.setId(1L);
+        reservation.setUser(testUser);
+        reservation.setRoom(testRoom);
+        reservation.setStartDate(testReservation.getStartDate());
+        reservation.setEndDate(testReservation.getEndDate());
+        reservation.setStatus(ReservationStatus.ACTIVE);
+
+        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+        when(reservationRepository.save(any())).thenReturn(reservation);
+
+        reservationService.cancelReservation(1L);
+
+        assertEquals(ReservationStatus.CANCELLED, reservation.getStatus());
+        assertNotNull(reservation.getCancelledAt());
+        verify(reservationRepository, times(1)).save(reservation);
+    }
+
+    @Test
+    void cancelReservation_alreadyCancelled() {
+        Reservation reservation = new Reservation();
+        reservation.setId(1L);
+        reservation.setUser(testUser);
+        reservation.setRoom(testRoom);
+        reservation.setStartDate(testReservation.getStartDate());
+        reservation.setEndDate(testReservation.getEndDate());
+        reservation.setStatus(ReservationStatus.CANCELLED);
+
+        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+
+        assertThrows(ConflictException.class, () ->
+                reservationService.cancelReservation(1L)
         );
 
         verify(reservationRepository, never()).save(any());
